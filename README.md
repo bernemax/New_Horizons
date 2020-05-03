@@ -7,3 +7,7 @@ Then trying to figure out how RH, based on this data, works and what for advanta
 (Possibility to creat dynamic set up datas without coding in GAMS)
 
 Next step is indeed to code sets that are updating there content continiously.
+
+
+
+starting up and shuting down constrains are major factors for planning with RH characteristis
