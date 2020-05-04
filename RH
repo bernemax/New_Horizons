@@ -30,17 +30,6 @@ t time periods
 
 *until iteration48
 
-  Wind_it  wind availability forcasts
-/Wind_availability1 * Wind_availability12/
-
-* until Wind_availability48
-
-  Sun_it   sun availability forcasts
-/Sun_availability1 * Sun_availability12/
-
-* until sun_availability48
-
-
 *execute_unload "check.gdx";
 *$stop
 
@@ -66,8 +55,8 @@ PARAMETERS
         cap(p)                   capacities of PPs
         vc(p)                    variable production costs of PPs
         demand(t,it)             demand in in every periode      
-        af_wind(t,wind_it)       availability factor for wind feed-in in every periode
-        af_sun(t,sun_it)         availability factor for sun feed-in in every periode
+        af_wind(t,it)            availability factor for wind feed-in in every periode
+        af_sun(t,it)             availability factor for sun feed-in in every periode
         
         g_min(p)                 minimum generation
  *      PH(t)                    prediction horizon
@@ -75,6 +64,8 @@ PARAMETERS
         
         SU_costs(p,t,it)
         SH_costs(p,t,it)
+        SU_time(p)               start-up time
+        SD_time(p)               shut_down time
         
         stor_cap(sys)            storage capacity
 ;
@@ -110,6 +101,9 @@ g_min(p)     = Generation(p,'min_generation')   ;
 SU_costs(p,t,it) = Generation(p,'start up costs');
 SH_costs(p,t,it) = Generation(p,'shut down costs');
 
+**********Starting up and Shuting down times**********
+SU_time(p) = Generation(p,'start_up_time');
+SD_time(p) = Generation(P,'shut_down_time');
 
 **********Efficiency**********************************
 Parameters
@@ -135,9 +129,6 @@ SD_eff(p,t,it) = 0.1;
 
 *eff_store(sys) = 0.8;
 
-**********Starting up and Shuting down times**********
-*Parameter
-
 *execute_unload "check.gdx";
 *$stop
 
@@ -146,6 +137,12 @@ variable TC
 ;
 positive variable
 G(p,t,it);
+
+Binary variable
+run(p,t,it)
+boot(p,t,it)
+down(p,t,it);
+
 
 integer variable
 INT_SU(p,t,it)
@@ -158,21 +155,15 @@ Int_SU.up(ccgt,t,it) = 5 ;
 
 *Int_SU.up(w,t,it) = 2 ;
 
-
-*Binary variable
-*prod_nuc(p,t,it);
-
-*prod_nuc(n,t,it)= 1$(ord(t)=sut_nuc(n,t,it));
-
-
 *execute_unload "check.gdx";
 *$stop
 
 equations
 
-
 OBJECTIVE
 ENERGY_BALANCE
+
+
 MAX_GENERATION_NUC
 MAX_GENERATION_LIG
 MAX_GENERATION_OCGT
@@ -202,9 +193,9 @@ Max_Generation_ocgt(ocgt,t,it)..         G(ocgt,t,it) =l= cap(ocgt)* INT_SU(ocgt
 
 Max_Generation_ccgt(ccgt,t,it)..         G(ccgt,t,it) =l= cap(ccgt)* INT_SU(ccgt,t,it);
 
-Max_Generation_wind(w,t,it,wind_it)..    G(w,t,it) =l=  cap(w) * af_wind(t,wind_it) ;
+Max_Generation_wind(w,t,it)..            G(w,t,it) =l=  cap(w) * af_wind(t,it) ;
 
-Max_Generation_sun(s,t,it,sun_it)..      G(s,t,it) =l= cap(s)* af_sun(t,sun_it) ;
+Max_Generation_sun(s,t,it)..             G(s,t,it) =l= cap(s)* af_sun(t,it) ;
 
 
 
@@ -216,7 +207,9 @@ startup(p,t,it)..                       P_ON(p,t,it) - P_ON(p,t-1,it)   =L= INT_
 
 
 model RH /all/;
-*af_wind(t,wind_it)= 1;
+*af_wind(t,it)= 1;
+*af_sun(t,it)= 1;
+
 
 
 
