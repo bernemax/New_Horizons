@@ -92,7 +92,7 @@ opt_time(t)  =    branch (it,t);
 solve try using lp minimizing TC;
 report_gen.l(p,t,it,'generation') = G.l(p,t);
 
-*G.fx(p,t) = G.l(p,t);
+G.fx(p,t)$opt_time(t) = G.l(p,t);
 
 );
 
