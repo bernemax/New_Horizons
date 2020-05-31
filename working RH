@@ -59,7 +59,7 @@ positive variable
         G(p,t)
 ;
 positive variable
-report_gen(p,t,*)
+report_gen(p,t,it,*)
 ;
 
 equations
@@ -90,7 +90,7 @@ Loop (it,
 opt_time(t)  =    branch (it,t);
 
 solve try using lp minimizing TC;
-report_gen.l(p,t,'generation') = G.l(p,t);
+report_gen.l(p,t,it,'generation') = G.l(p,t);
 
 *G.fx(p,t) = G.l(p,t);
 
