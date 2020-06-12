@@ -16,12 +16,9 @@ i10.(10*12),
 i11.(11*12),
 i12.(12)/
     opt_time(t)    'optimization time'
-
     tfirst(t) 
 ;
 tfirst(t) = yes$(ord(t) eq 1);
-=======
-
 set
         p        power plants           /
 P1_NUC
@@ -33,15 +30,16 @@ P5_Wind
         c(p)            conventional plants
         r(p)            RES plants
 ;
+alias(it,iitt)
+alias(t,tt)
 
 PARAMETERS
-
         genup                   all information about generation
         timeup                  all information about time-series
         cap(p)                  capacities of PPs
         vc(p)                   variable production costs of PPs
-        demand_forecast(t)      demand forecasted
-        demand_real (t)         actual demand
+        demand_forecast(t,it)      demand forecasted
+        demand_real (t,it)         actual demand
         af_wind(t)              availability of wind
 ;
 
@@ -64,30 +62,25 @@ c(p)    = genup(p,'type')= 1 ;
 r(p)    = genup(p,'type')= 2 ;
 cap(p)  = genup(p,'capacity');
 vc(p)   = genup(p,'vc')      ;
-
-demand_forecast(t)  = timeup(t,'Demand_forecast')  ;
-demand_real (t)     = timeup(t,'actual_demand')  ;
-
-
+demand_forecast(t,it)  = timeup(t,'Demand_forecast')  ;
+demand_real (t,it)     = timeup(t,'actual_demand')  ;
 af_wind(t) = timeup(t,'Wind_af') ;
 
 *execute_unload "check.gdx";
 *$stop
 
 Parameters
-
 count,
 mauzi,
 price(t,it);
 ;
 mauzi =1;
 count = 1;
-
 variable
         TC
 ;
 positive variable
-        G(p,t)
+        G(p,t,it)
 ;
 positive variable
 report_gen(p,t,it,*)
@@ -101,16 +94,13 @@ MAX_GENERATION
 MAX_GENERATION_WIND
 ;
 
-OBJECTIVE..                               TC =e= sum((p,t), G(p,t)*vc(p));
+OBJECTIVE(iitt)..                              TC =e= sum((p,t), G(p,t,iitt)*vc(p));
 
-
-ENERGY_BALANCE(t)$opt_time(t)..           demand_forecast(t) =e= sum(p, G(p,t));
-
-
+ENERGY_BALANCE(t,iitt)$opt_time(t)..           demand_forecast(t,iitt) =e= sum(p, G(p,t,iitt));
     
 
-MAX_GENERATION(c,t)..                     G(c,t)        =l= cap(c);
-MAX_GENERATION_WIND(r,t)..                G(r,t)        =l= cap(r)*af_wind(t);
+MAX_GENERATION(c,t,iitt)..                     G(c,t,iitt)        =l= cap(c);
+MAX_GENERATION_WIND(r,t,iitt)..                G(r,t,iitt)        =l= cap(r)*af_wind(t);
 
 model try /all/;
 
@@ -122,27 +112,24 @@ model try /all/;
 Loop (it,
 
 opt_time(t)  =    branch (it,t);
-
+ 
 if (ord(it) eq count,
-demand_forecast(t)$(ord(t)=1)= demand_real(t);
+demand_forecast(t,it)$(ord(t)=count)= demand_real(t,it);
 else
-demand_forecast(t)= demand_forecast(t);
+demand_forecast(t,it)= demand_forecast(t,it);
 )
-
 
 
 solve try using lp minimizing TC;
 
-report_gen.l(p,t,it,'generation') = G.l(p,t);
+report_gen.l(p,t,it,'generation') = G.l(p,t,it);
 
-G.fx(p,t)$(ord(t)= ord(it) and opt_time(t)) = G.l(p,t);
+G.fx(p,t,it)$(ord(t)= ord(it) and opt_time(t)) = G.l(p,t,it);
 
-Price(t,it)$opt_time(t) = - Energy_balance.m(t);
-
+Price(t,it)$opt_time(t) = - Energy_balance.m(t,it);
 
 count = count+1;
 *mauzi = mauzi +1;
-
 );
 
 
@@ -155,4 +142,3 @@ count = count+1;
 
 execute_unload "check.gdx";
 $stop
-
