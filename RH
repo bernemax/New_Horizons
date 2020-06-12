@@ -16,7 +16,12 @@ i10.(10*12),
 i11.(11*12),
 i12.(12)/
     opt_time(t)    'optimization time'
+
+    tfirst(t) 
 ;
+tfirst(t) = yes$(ord(t) eq 1);
+=======
+
 set
         p        power plants           /
 P1_NUC
@@ -30,12 +35,14 @@ P5_Wind
 ;
 
 PARAMETERS
-        genup            all information about generation
-        timeup           all information about time-series
-        cap(p)           capacities of PPs
-        vc(p)            variable production costs of PPs
-        demand(t)        demand in node N
-        af_wind(t)       availability of wind
+
+        genup                   all information about generation
+        timeup                  all information about time-series
+        cap(p)                  capacities of PPs
+        vc(p)                   variable production costs of PPs
+        demand_forecast(t)      demand forecasted
+        demand_real (t)         actual demand
+        af_wind(t)              availability of wind
 ;
 
 $onecho > input_data.tmp
@@ -57,7 +64,11 @@ c(p)    = genup(p,'type')= 1 ;
 r(p)    = genup(p,'type')= 2 ;
 cap(p)  = genup(p,'capacity');
 vc(p)   = genup(p,'vc')      ;
-demand(t)  = timeup(t,'Demand')  ;
+
+demand_forecast(t)  = timeup(t,'Demand_forecast')  ;
+demand_real (t)     = timeup(t,'actual_demand')  ;
+
+
 af_wind(t) = timeup(t,'Wind_af') ;
 
 *execute_unload "check.gdx";
@@ -65,8 +76,13 @@ af_wind(t) = timeup(t,'Wind_af') ;
 
 Parameters
 
+count,
+mauzi,
 price(t,it);
 ;
+mauzi =1;
+count = 1;
+
 variable
         TC
 ;
@@ -87,7 +103,10 @@ MAX_GENERATION_WIND
 
 OBJECTIVE..                               TC =e= sum((p,t), G(p,t)*vc(p));
 
-ENERGY_BALANCE(t)$opt_time(t)..           demand(t) =e= sum(p, G(p,t));
+
+ENERGY_BALANCE(t)$opt_time(t)..           demand_forecast(t) =e= sum(p, G(p,t));
+
+
     
 
 MAX_GENERATION(c,t)..                     G(c,t)        =l= cap(c);
@@ -104,6 +123,13 @@ Loop (it,
 
 opt_time(t)  =    branch (it,t);
 
+if (ord(it) eq count,
+demand_forecast(t)$(ord(t)=1)= demand_real(t);
+else
+demand_forecast(t)= demand_forecast(t);
+)
+
+
 
 solve try using lp minimizing TC;
 
@@ -112,6 +138,10 @@ report_gen.l(p,t,it,'generation') = G.l(p,t);
 G.fx(p,t)$(ord(t)= ord(it) and opt_time(t)) = G.l(p,t);
 
 Price(t,it)$opt_time(t) = - Energy_balance.m(t);
+
+
+count = count+1;
+*mauzi = mauzi +1;
 
 );
 
@@ -125,3 +155,4 @@ Price(t,it)$opt_time(t) = - Energy_balance.m(t);
 
 execute_unload "check.gdx";
 $stop
+
