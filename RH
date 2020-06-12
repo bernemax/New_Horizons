@@ -1,233 +1,143 @@
-Sets p power plants
- /
-
+set t
+/1*12/
+    it
+/i1*i12/
+    branch  (it,t) 'time periods in each iteration'
+/i1.(1*4),
+i2.(2*5),
+i3.(3*6),
+i4.(4*7),
+i5.(5*8),
+i6.(6*9),
+i7.(7*10),
+i8.(8*11),
+i9.(9*12),
+i10.(10*12),
+i11.(11*12),
+i12.(12)/
+    opt_time(t)    'optimization time'
+    tfirst(t) 
+;
+tfirst(t) = yes$(ord(t) eq 1);
+set
+        p        power plants           /
 P1_NUC
 P2_OCGT
 P3_LIG
 P4_CCGT
 P5_Wind
-P6_CCGT
-P7_OCGT
-P8_Wind
-P9_NUC
-P10_OCGT
-P11_LIG
-P12_CCGT
-P13_Wind
-P14_CCGT
-P15_OCGT
-P16_Wind
 /
- 
-
-sys Storage system
-
-t time periods
-/1*48/
-    
-    it iterations
-/iteration1*iteration12/
-
-*until iteration48
-
-*execute_unload "check.gdx";
-*$stop
-
-ti(t) = yes $(ord(t)=1)
-;
-
-alias (t,tt)
-;
-alias (it,itt)
-;
-SETS
-    n(p)            nuclear plants
-    Lig(p)          Lignite plants
-    OCGT(p)         OCGT    plants
-    CCGT(p)         CCGT    plants
-    w(p)            wind    plants
-    s(p)            sun     plants     
-
+        c(p)            conventional plants
+        r(p)            RES plants
 ;
 
 PARAMETERS
-        Generation               all information about generation
-        cap(p)                   capacities of PPs
-        vc(p)                    variable production costs of PPs
-        demand(t,it)             demand in in every periode      
-        af_wind(t,it)            availability factor for wind feed-in in every periode
-        af_sun(t,it)             availability factor for sun feed-in in every periode
-        
-        g_min(p)                 minimum generation
- *      PH(t)                    prediction horizon
- *      CH(t)                    controll horizon
-        
-        SU_costs(p,t,it)
-        SH_costs(p,t,it)
-        SU_time(p)               start-up time
-        SD_time(p)               shut_down time
-        
-        stor_cap(sys)            storage capacity
+        genup                   all information about generation
+        timeup                  all information about time-series
+        cap(p)                  capacities of PPs
+        vc(p)                   variable production costs of PPs
+        demand_forecast(t)      demand forecasted
+        demand_real (t)         actual demand
+        af_wind(t)              availability of wind
 ;
 
-
 $onecho > input_data.tmp
-         par=Generation    rng=Generation!A1      cdim=1 rdim=1
-         par=demand        rng=Timing_RH!A1       cdim=1 rdim=1
-         par=af_wind       Rng=Timing_wind!A1     cdim=1 rdim=1
-         par=af_sun        rng=Timing_sun!A1      cdim=1 rdim=1
+        par=genup            rng=Power!A1                  cdim=1 rdim=1
+        par=timeup           rng=Time!A1                   cdim=1 rdim=1
+ 
 $offecho
 
 $onUNDF
-$call   gdxxrw I=Input_RH.xlsx O=Input_RH.gdx cmerge=1 @input_data.tmp
-$gdxin  Input_RH.gdx
-$load   Generation, demand, af_wind, af_sun
+$call   gdxxrw I=try_data.xlsx O=try_data.gdx cmerge=1 @input_data.tmp
+$gdxin  try_data.gdx
+$load   genup, timeup
 $offUNDF
+ 
+*execute_unload "check.gdx";
+*$stop
+
+c(p)    = genup(p,'type')= 1 ;
+r(p)    = genup(p,'type')= 2 ;
+cap(p)  = genup(p,'capacity');
+vc(p)   = genup(p,'vc')      ;
+demand_forecast(t)  = timeup(t,'Demand_forecast')  ;
+demand_real (t)     = timeup(t,'actual_demand')  ;
+af_wind(t) = timeup(t,'Wind_af') ;
 
 *execute_unload "check.gdx";
 *$stop
-**********Power Plants*******************************
-n(p)         = Generation(p,'Type')= 1          ;
-Lig(p)       = Generation(p,'Type')= 2          ;
-OCGT(p)      = Generation(p,'Type')= 3          ;
-CCGT(p)      = Generation(p,'Type')= 4          ;
-w(p)         = Generation(p,'Type')= 5          ;
-s(p)         = Generation(p,'Type')= 6          ;
-cap(p)       = Generation(p,'Capacity')         ;
-vc(p)        = Generation(p,'VC')               ;
-g_min(p)     = Generation(p,'min_generation')   ;  
 
-**********Starting up and Shuting down***************
-SU_costs(p,t,it) = Generation(p,'start up costs');
-SH_costs(p,t,it) = Generation(p,'shut down costs');
-
-**********Starting up and Shuting down times**********
-SU_time(p) = Generation(p,'start_up_time');
-SD_time(p) = Generation(P,'shut_down_time');
-
-**********Efficiency**********************************
 Parameters
-
-*power_charge(sys)
-*power_gen(sys)
-*loss_stor(sys)
-
-SU_eff(p,t,it)          Start-up efficiency
-SD_eff(p,t,it)          Shut-down efficiency
-
-eff_store(sys)          efficiency of each storage system
+count,
+mauzi,
+price(t,it);
 ;
-
-
-*power_charge(sys) = 0.2 * stor_cap(sys);
-*power_gen(sys)    = 0.2 * stor_cap(sys);
-*loss_stor(sys)    = eff_store(sys);
-
-
-SU_eff(p,t,it) = 0.4;
-SD_eff(p,t,it) = 0.1;
-
-*eff_store(sys) = 0.8;
-
-*execute_unload "check.gdx";
-*$stop
-
-
-variable TC
+mauzi =1;
+count = 1;
+variable
+        TC
 ;
 positive variable
-G(p,t,it);
-
-Binary variable
-run(p,t,it)
-boot(p,t,it)
-down(p,t,it);
-
-
-integer variable
-INT_SU(p,t,it)
-Int_SH(p,t,it);
-
-Int_SU.up(n,t,it)    = 2 ;
-Int_SU.up(lig,t,it)  = 3 ;
-Int_SU.up(ocgt,t,it) = 4 ;
-Int_SU.up(ccgt,t,it) = 5 ;
-
-*Int_SU.up(w,t,it) = 2 ;
-
-*execute_unload "check.gdx";
-*$stop
+        G(p,t)
+;
+positive variable
+report_gen(p,t,it,*)
+;
 
 equations
 
 OBJECTIVE
 ENERGY_BALANCE
-
-
-MAX_GENERATION_NUC
-MAX_GENERATION_LIG
-MAX_GENERATION_OCGT
-MAX_GENERATION_CCGT
+MAX_GENERATION
 MAX_GENERATION_WIND
-MAX_GENERATION_SUN
-
-
-MIN_GENERATION
-MAX_ONLINE
-STARTUP
-
-;
-Objective..  TC =e= sum((p,t,it), G(p,t,it) * vc(p))
-                +   sum((p,t,it), Int_SU(p,t,it) * SU_costs(p,t,it))
-                +   sum((p,t,it), Int_SH(p,t,it) * SH_costs(p,t,it))
-           
 ;
 
-Energy_balance(t,it)..                   demand(t,it) =e= sum((p), G(p,t,it));
+OBJECTIVE..                               TC =e= sum((p,t), G(p,t)*vc(p));
 
-Max_Generation_nuc(n,t,it)..             G(n,t,it) =l=  cap(n)* INT_SU(n,t,it);
+ENERGY_BALANCE(t)$opt_time(t)..           demand_forecast(t) =e= sum(p, G(p,t));
+    
 
-Max_Generation_Lig(lig,t,it)..           G(lig,t,it) =l=  cap(lig)* INT_SU(lig,t,it);
+MAX_GENERATION(c,t)..                     G(c,t)        =l= cap(c);
+MAX_GENERATION_WIND(r,t)..                G(r,t)        =l= cap(r)*af_wind(t);
 
-Max_Generation_ocgt(ocgt,t,it)..         G(ocgt,t,it) =l= cap(ocgt)* INT_SU(ocgt,t,it);
-
-Max_Generation_ccgt(ccgt,t,it)..         G(ccgt,t,it) =l= cap(ccgt)* INT_SU(ccgt,t,it);
-
-Max_Generation_wind(w,t,it)..            G(w,t,it) =l=  cap(w) * af_wind(t,it) ;
-
-Max_Generation_sun(s,t,it)..             G(s,t,it) =l= cap(s)* af_sun(t,it) ;
-
-
-
-min_generation(p,t,it)..                P_ON(p,t,it) * g_min(p)         =L= G(p,t,it)                     ;
-max_online(p,t,it)..                    P_ON(p,t,it)                    =L= cap(p) *  INT_SU(p,t,it)      ;
-startup(p,t,it)..                       P_ON(p,t,it) - P_ON(p,t-1,it)   =L= INT_SU(p,t,it)                ;
-
-
-
-
-model RH /all/;
-*af_wind(t,it)= 1;
-*af_sun(t,it)= 1;
-
-
-
-
-solve RH using MIP minimizing TC;
-*loop((t),
-*tph(t) = tph(t+1);
-*)
+model try /all/;
 
 *execute_unload "check.gdx";
 *$stop
 
 
-Parameters
 
-price(t,it);
+Loop (it,
 
-Price(t,it) = - Energy_balance.m(t,it);
+opt_time(t)  =    branch (it,t);
+ 
+if (ord(it) eq count,
+demand_forecast(t)$(ord(t)=1)= demand_real(t);
+else
+demand_forecast(t)= demand_forecast(t);
+)
+
+
+solve try using lp minimizing TC;
+
+report_gen.l(p,t,it,'generation') = G.l(p,t);
+
+G.fx(p,t)$(ord(t)= ord(it) and opt_time(t)) = G.l(p,t);
+
+Price(t,it)$opt_time(t) = - Energy_balance.m(t);
+
+count = count+1;
+*mauzi = mauzi +1;
+);
+
+
+*Parameters
+
+*price(t,it);
+
+*Price(t,it)$opt_time(t) = - Energy_balance.m(t);
 
 
 execute_unload "check.gdx";
 $stop
+
