@@ -49,8 +49,8 @@ PARAMETERS
         SU_costs(p)             start_up_costs
         SD_costs(p)
         
-        level_su(p,t)
-        level_sd(p,t)
+        level_su(p,t,it)
+        level_sd(p,t,it)
         online(p,t)
         report_gen(p,t,it,*)
 ;
@@ -81,7 +81,7 @@ SU_costs(p)             = genup(p,'Start_up_costs');
 
 
 SD_costs(p)             = 1;
-level_su(p,t)        = 0;
+level_su(p,t,it)        = 0;
 
 
 *execute_unload "check.gdx";
@@ -177,8 +177,8 @@ report_gen(p,t,it,'generation') = G.l(p,t,it);
 
 ************************************trying to fix start-up-activity for next iteration************************************************
 
-level_su(c,t) = su.l(c,t,it);
-su.fx(c,t,it) = level_su(c,t);
+level_su(c,t,it) = su.l(c,t,it);
+su.fx(c,t,it) = level_su(c,t,it);
 
 P_on.fx(c,t,it)$first_t_it(t,it) = P_on.l(c,t,it);
 online(c,t) = p_on.l(c,t,it);
