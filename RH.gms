@@ -3,15 +3,7 @@ set t
     it
 /i1*i9/
     branch  (it,t) 'time periods in each iteration'
-/i1.(1*4),
-i2.(1*5),
-i3.(1*6),
-i4.(1*7),
-i5.(1*8),
-i6.(1*9),
-i7.(1*10),
-i8.(1*11),
-i9.(1*12)
+/i1*i3
 /
     opt_time(t,it)    'optimization time'
     tfirst(t)
@@ -183,37 +175,37 @@ model try /all/;
 *$stop
 
 
-Loop (it,
+Loop (branch,
+
+*[time definitions - which hours to solve]
+1) if branch is 1: hours 1-3 in model
+2) now(t) t
+3) tomorrow(t) t+1
+4) d+1(t) t+1
+*solve model
+*export data
+*);
 
 
-[time definitions]
+         opt_time(t,it)  =    branch (it,t);
 
-solve model
+         if (ord(branch) eq count,
+         demand_forecast(t,it)$(ord(t)=count)= demand_real(t,it);
+         demand_forecast(t,it)$(ord(t) le count -1) = demand_real(t,it);
+         demand_forecast(t,it)$(ord(t) gt count +3) = 0;
+         demand_real(t,it)$(ord(t) gt count )       = 0;
 
-export data
+         else
+         demand_forecast(t,it)= demand_forecast(t,it);
+         );
 
-);
-
-
-opt_time(t,it)  =    branch (it,t);
-
-if (ord(it) eq count,
-demand_forecast(t,it)$(ord(t)=count)= demand_real(t,it);
-demand_forecast(t,it)$(ord(t) le count -1) = demand_real(t,it);
-demand_forecast(t,it)$(ord(t) gt count +3) = 0;
-demand_real(t,it)$(ord(t) gt count )       = 0;
-
-else
-demand_forecast(t,it)= demand_forecast(t,it);
-);
-
-first_t_it(t,it) = count$(ord(t)=count);
-Second_t_it(t,it)= count$(ord(t)=count+1);
+         first_t_it(t,it) = count$(ord(t)=count);
+         Second_t_it(t,it)= count$(ord(t)=count+1);
 
 
-solve try using lp minimizing TC ;
+         solve try using lp minimizing TC ;
 
-report_gen.l(p,t,it,'generation') = G.l(p,t,it);
+*report_gen.l(p,t,it,'generation') = G.l(p,t,it);
 
 *G.fx(p,t,it)$(ord(t)= ord(it) and opt_time(t,it)) = G.l(p,t,it);
 
@@ -221,21 +213,21 @@ report_gen.l(p,t,it,'generation') = G.l(p,t,it);
 
 *model_stor_out_it(t,it) = level_stor.l(t,it);
 
-su.fx(c,t,it) = su.l(c,t,it);
-level_su(c,t,it) = su.l(c,t,it);
+*su.fx(c,t,it) = su.l(c,t,it);
+*level_su(c,t,it) = su.l(c,t,it);
 
-P_on.fx(c,t,it) = P_on.l(c,t,it);
-online(c,t,it) = p_on.l(c,t,it);
+*P_on.fx(c,t,it) = P_on.l(c,t,it);
+*online(c,t,it) = p_on.l(c,t,it);
 
-Price(t,it)$opt_time(t,it) = - Energy_balance.m(t,it);
+         Price(t,it)$opt_time(t,it) = - Energy_balance.m(t,it);
 
-count = count+1;
-
+         count = count+1;
 
 );
 
-display model_stor_out_it, level_su, online;
-
-
 execute_unload "check.gdx";
 $stop
+
+
+*put_utility 'gdxout' / 'output_v20_EVP\v20_STOCH_FINV_Scen_' UncPar.tl:0;
+*execute_unload  ;

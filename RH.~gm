@@ -3,21 +3,13 @@ set t
     it
 /i1*i9/
     branch  (it,t) 'time periods in each iteration'
-/i1.(1*4),
-i2.(1*5),
-i3.(1*6),
-i4.(1*7),
-i5.(1*8),
-i6.(1*9),
-i7.(1*10),
-i8.(1*11),
-i9.(1*12)
+/i1*i3
 /
     opt_time(t,it)    'optimization time'
     tfirst(t)
     first_t_it(t,it)  'first hour in each iteration'
     Second_t_it(t,it) 'second hour in each iteration'
-   
+
 ;
 
 tfirst(t) = yes$(ord(t) eq 1);
@@ -47,7 +39,7 @@ PARAMETERS
         demand_real (t,it)         actual demand
         af_wind(t)              availability of wind
         SU_costs(p)             start_up_costs
-        
+
         model_stor_out_it(t,it)
         level_su(p,t,it)
         online(p,t,it)
@@ -56,7 +48,7 @@ PARAMETERS
 $onecho > input_data.tmp
         par=genup            rng=Power!A1                  cdim=1 rdim=1
         par=timeup           rng=Time!A1                   cdim=1 rdim=1
- 
+
 $offecho
 
 $onUNDF
@@ -64,7 +56,7 @@ $call   gdxxrw I=try_data.xlsx O=try_data.gdx cmerge=1 @input_data.tmp
 $gdxin  try_data.gdx
 $load   genup, timeup
 $offUNDF
- 
+
 *execute_unload "check.gdx";
 *$stop
 
@@ -81,25 +73,25 @@ level_su(p,t,it)        = 0;
 
 *execute_unload "check.gdx";
 *$stop
-   
+
 Parameters
 count
 
 price(t,it)
 
-cap_stor              
-power_turb               
-power_pump               
+cap_stor
+power_turb
+power_pump
 loss_stor
-g_min            
+g_min
 ;
 
 
 count = 1;
 
-cap_stor    = 200;   
-power_turb  = 100;     
-power_pump  = 50;    
+cap_stor    = 200;
+power_turb  = 100;
+power_pump  = 50;
 loss_stor   = 0.2;
 g_min = 0.3;
 
@@ -114,9 +106,9 @@ G(p,t,it)
 report_gen(p,t,it,*)
 report_stor(t,it,*)
 
-level_stor(t,it)         
-charge_stor(t,it)       
-gen_stor(t,it)           
+level_stor(t,it)
+charge_stor(t,it)
+gen_stor(t,it)
 
 
 
@@ -136,8 +128,8 @@ MAX_GENERATION_WIND
 $ontext
 stor_level_def
 *Stor_gen_RH
-stor_level_cap        
-stor_gen_cap_level      
+stor_level_cap
+stor_gen_cap_level
 stor_charge_cap
 
 *stor_level_iteration
@@ -153,7 +145,7 @@ OBJECTIVE..                                          TC =e= sum((p,t,iitt)$opt_t
 
 ENERGY_BALANCE(t,iitt)$opt_time(t,iitt)..                            demand_forecast(t,iitt) =e= sum(p, G(p,t,iitt));
 *                                                                               + gen_stor(t,iitt) - charge_stor(t,iitt);
-    
+
 
 MAX_GENERATION(c,t,iitt)..                     G(c,t,iitt)        =l= P_On(c,t,iitt);
 *                                                                    cap(c)
@@ -183,28 +175,37 @@ model try /all/;
 *$stop
 
 
+Loop (branch,
 
-Loop (it,
-
-opt_time(t,it)  =    branch (it,t);
- 
-if (ord(it) eq count,
-demand_forecast(t,it)$(ord(t)=count)= demand_real(t,it);
-demand_forecast(t,it)$(ord(t) le count -1) = demand_real(t,it);
-demand_forecast(t,it)$(ord(t) gt count +3) = 0;
-demand_real(t,it)$(ord(t) gt count )       = 0;
-
-else
-demand_forecast(t,it)= demand_forecast(t,it);
-);
-
-first_t_it(t,it) = count$(ord(t)=count);
-Second_t_it(t,it)= count$(ord(t)=count+1);
+*[time definitions - which hours to solve]
+1) if branch is 1: hours 1-3 in model
+2) now(t) t
+3) tomorrow(t) t+1
+4) d+1(t) t+1
+*solve model
+*export data
+*);
 
 
-solve try using lp minimizing TC ;
+         opt_time(t,it)  =    branch (it,t);
 
-report_gen.l(p,t,it,'generation') = G.l(p,t,it);
+         if (ord(branch) eq count,
+         demand_forecast(t,it)$(ord(t)=count)= demand_real(t,it);
+         demand_forecast(t,it)$(ord(t) le count -1) = demand_real(t,it);
+         demand_forecast(t,it)$(ord(t) gt count +3) = 0;
+         demand_real(t,it)$(ord(t) gt count )       = 0;
+
+         else
+         demand_forecast(t,it)= demand_forecast(t,it);
+         );
+
+         first_t_it(t,it) = count$(ord(t)=count);
+         Second_t_it(t,it)= count$(ord(t)=count+1);
+
+
+         solve try using lp minimizing TC ;
+
+*report_gen.l(p,t,it,'generation') = G.l(p,t,it);
 
 *G.fx(p,t,it)$(ord(t)= ord(it) and opt_time(t,it)) = G.l(p,t,it);
 
@@ -212,22 +213,17 @@ report_gen.l(p,t,it,'generation') = G.l(p,t,it);
 
 *model_stor_out_it(t,it) = level_stor.l(t,it);
 
-su.fx(c,t,it) = su.l(c,t,it);
-level_su(c,t,it) = su.l(c,t,it);
+*su.fx(c,t,it) = su.l(c,t,it);
+*level_su(c,t,it) = su.l(c,t,it);
 
+*P_on.fx(c,t,it) = P_on.l(c,t,it);
+*online(c,t,it) = p_on.l(c,t,it);
 
-P_on.fx(c,t,it) = P_on.l(c,t,it);
-online(c,t,it) = p_on.l(c,t,it);
+         Price(t,it)$opt_time(t,it) = - Energy_balance.m(t,it);
 
-Price(t,it)$opt_time(t,it) = - Energy_balance.m(t,it);
-
-count = count+1;
-
+         count = count+1;
 
 );
-
-display model_stor_out_it, level_su, online;
-
 
 execute_unload "check.gdx";
 $stop

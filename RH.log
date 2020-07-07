@@ -1,0 +1,57 @@
+
+--- Job RH.gms Start 07/07/20 14:56:54 28.2.0 r750fa45 WEX-WEI x86 64bit/MS Windows
+--- GAMS Parameters defined
+    Input C:\Users\iegor\Desktop\Git projects\GitHub - New_Horizons\RH.gms
+    PageWidth 80
+    PageSize 0
+    PageContr 3
+    Action CE
+    ScrDir C:\Users\iegor\Desktop\Git projects\GitHub - New_Horizons\225a\
+    SysDir C:\GAMS\win64\28.2\
+    WorkDir C:\Users\iegor\Desktop\Git projects\GitHub - New_Horizons\
+    LogOption 3
+    DFormat 0
+    TFormat 0
+    ErrorLog 99
+    IDE 1
+GAMS 28.2.0   Copyright (C) 1987-2019 GAMS Development. All rights reserved
+Licensee: Small MUD - 5 User License                     S181112:0455AO-WIN
+          BTU Cottbus-Senftenberg, FG Energiewirtschaft              DC5591
+          License for teaching and research at degree granting institutions
+          License Admin: Felix Muesgens, Fg-energiewirtschaft@b-tu.de      
+--- Starting compilation
+--- RH.gms(57) 3 Mb
+--- call gdxxrw I=try_data.xlsx O=try_data.gdx cmerge=1 @input_data.tmp
+
+GDXXRW           28.2.0 r750fa45 Released Aug 19, 2019 VS8 x86 32bit/MS Window
+Input file : C:\Users\iegor\Desktop\Git projects\GitHub - New_Horizons\try_data.xlsx
+Output file: C:\Users\iegor\Desktop\Git projects\GitHub - New_Horizons\try_data.gdx
+Value expected in cell: Power!B2; found Nuclear
+Value expected in cell: Power!B3; found OCGT
+Value expected in cell: Power!B4; found Lignite
+Value expected in cell: Power!B5; found CCGT
+Value expected in cell: Power!B6; found Wind
+Additional errors suppressed
+Total number of bad values for symbol genup = 18
+Total time = 594 Ms
+--- RH.gms(58) 3 Mb
+--- GDXin=C:\Users\iegor\Desktop\Git projects\GitHub - New_Horizons\try_data.gdx
+--- RH.gms(190) 3 Mb 2 Errors
+*** Error 651 in C:\Users\iegor\Desktop\Git projects\GitHub - New_Horizons\RH.gms
+    Ord type functions can only be referenced with a one dimensional set
+*** Error 650 in C:\Users\iegor\Desktop\Git projects\GitHub - New_Horizons\RH.gms
+    Ord type functions only work with controlling sets not with maps
+--- RH.gms(204) 3 Mb 3 Errors
+*** Error 257 in C:\Users\iegor\Desktop\Git projects\GitHub - New_Horizons\RH.gms
+    Solve statement not checked because of previous errors
+--- RH.gms(220) 3 Mb 4 Errors
+*** Error 141 in C:\Users\iegor\Desktop\Git projects\GitHub - New_Horizons\RH.gms
+    Symbol declared but no values have been assigned. Check for missing
+       data definition, assignment, data loading or implicit assignment
+       via a solve statement.
+       A wild shot: You may have spurious commas in the explanatory
+       text of a declaration. Check symbol reference list.
+--- RH.gms(226) 3 Mb 4 Errors
+*** Status: Compilation error(s)
+--- Job RH.gms Stop 07/07/20 14:56:55 elapsed 0:00:00.699
+Exit code = 2
