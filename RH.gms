@@ -81,9 +81,7 @@ $ontext
 loop(it,
 
     if (ord(it),
-        demand_forecast(t,it)$(ord(t) le 24*ord(it))= demand_forecast(t,it);
-        demand_forecast(t,it)$(ord(t) gt 24*ord(it))= 0;
-        demand_forecast(t,it)$(ord(t) < 24*(ord(it)-1)$(ord(it)>1)) = 0;
+        demand_forecast(t,it)$(CH(t,it))= demand_forecast(t,it);
     
      else
         demand_forecast(t,it) = 0;
@@ -151,25 +149,9 @@ startup(c,t,iitt)$(PH(t,iitt))..                        P_on(c,t,iitt) - P_on(c,
             
 model try /all/;
 
-*solve try using lp minimizing tc;
-*P_on.fx(p,t,it+1)$(FH(t,it))= P_on.l(p,t,it)$(FH(t,it));
-
-*execute_unload "check.gdx";
-*$stop
-
 loop(it ,
 
-
-    if (ord(it) eq count,
-        demand_forecast(t,it)$(ord(t) le 24*ord(it))= demand_forecast(t,it);
-        demand_forecast(t,it)$(ord(t) gt 24*ord(it))= 0;
-        demand_forecast(t,it)$(ord(t) < 24*(ord(it)-1)$(ord(it)>1)) = 0;
-    
-     else
-        demand_forecast(t,it) = 0;
-    );
-        
-
+**************************************time definition in loop**************************************
     CH(t,it)$(ord(t) ge ord(it) + (23*(ord(it)-1))$(ord(it)>1) and ord(t) le (ord(it)*24) ) = yes;
     CH(t,it)$(ord(t) eq  (24*(ord(it)-1))$(ord(it)>1)) = yes;
     
@@ -179,7 +161,14 @@ loop(it ,
     
     FH(t,it)$(ord(t) eq ord(it) * 24 ) = yes;
     FH(t,it)$(ord(t) eq  (24*(ord(it)-1))$(ord(it)>1)) = yes;
-; 
+
+**************************************demand definition over time************************************
+    if (ord(it) eq count,
+        demand_forecast(t,it)$(CH(t,it))= demand_forecast(t,it);
+    
+     else
+        demand_forecast(t,it) = 0;
+    ); 
 
 solve try using lp minimizing tc;
   
@@ -198,7 +187,7 @@ $stop
 
 
 
-
+****************************************Results of the last skype call**********************************
 $ontext
 *[time definitions - which hours to solve]
 1) if branch is 1: hours 1-3 in model
