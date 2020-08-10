@@ -171,8 +171,12 @@ loop(it ,
     ); 
 
 solve try using lp minimizing tc;
-  
+
+**************************************      fixing Values     ****************************************
 P_on.fx(p,t,it+1)$(FH(t,it))= P_on.l(p,t,it)$(FH(t,it));
+
+
+
 
 price(t,it)= -energy_balance.m(t,it);
 
